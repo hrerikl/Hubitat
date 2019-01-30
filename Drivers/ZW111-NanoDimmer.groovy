@@ -1,8 +1,9 @@
 /**
  *
- *  Nano Dimmer (Aeotec Inc)
+ *  ZW 111 Nano Dimmer (Aeotec Inc)
  *  github: Erik Lundby (hrerikl) -- Modified Smartthings DH by ccheng@aeon-labs.com to Work On Hubitat  Added Support For Child Wall Swipe Device
- *  
+ *  https://raw.githubusercontent.com/hrerikl/Hubitat/master/Drivers/ZW111-NanoDimmer.groovy
+ *
  *  email: erik@lundbyhive.com
  *  Date:  2019-01-29
  * 
@@ -27,7 +28,7 @@
  */
  
 metadata {
-	definition (name: "Aeotec Inc Nano Dimmer", namespace: "erocm123", author: "Eric Maycock") {
+	definition (name: "Aeotec Inc Nano Dimmer", namespace: "hrerikl", author: "Erik Lundby") {
 		capability "Actuator"
 		capability "Switch"
 		capability "Switch Level"

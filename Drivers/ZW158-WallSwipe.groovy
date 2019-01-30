@@ -1,6 +1,8 @@
 /**
  *  Nano Wall Swipe ZW158
- *  
+ *  ZW 111 Nano Dimmer (Aeotec Inc)
+ *  github: Erik Lundby (hrerikl) 
+ *  https://raw.githubusercontent.com/hrerikl/Hubitat/master/Drivers/ZW158-WallSwipe.groovy
  *
  *
  *	Adapted from Child RGB Switch Of HubDuino project
