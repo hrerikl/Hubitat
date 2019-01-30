@@ -40,6 +40,7 @@ metadata {
         capability "Power Meter"
         capability "Pushable Button"
         capability "Health Check"
+		capability "Change Level"
         
 		//Was used in testing
 		//command "recreateChildDevices"
@@ -193,10 +194,22 @@ def zwaveEvent(hubitat.zwave.commands.sensormultilevelv5.SensorMultilevelReport 
 
 def on() {
 	commands([zwave.basicV1.basicSet(value: 0xFF), zwave.basicV1.basicGet()])
+	commands([zwave.basicV1.basicSet(value: 0xFF), zwave.basicV1.basicGet()])
 }
 
 def off() {
 	commands([zwave.basicV1.basicSet(value: 0x00), zwave.basicV1.basicGet()])
+}
+
+def startLevelChange(direction){
+	logging("startLevelChange Called with direction $direction")
+	//dimmingDuration:null, ignoreStartLevel:null, incDec:null, startLevel:null, stepSize:null, upDown:null
+	zwave.switchMultilevelV2.switchMultilevelStartLevelChange(upDown: (direction=='up' ? 0x00 :0x01) , ignoreStartLevel: 0x01,  startLevel: 0x10 , dimmingDuration: 0x10 ).format()
+}
+
+def stopLevelChange(){
+	logging("stopLevelChange Called")
+	zwave.switchMultilevelV1.switchMultilevelStopLevelChange().format()
 }
 
 def refresh() {
