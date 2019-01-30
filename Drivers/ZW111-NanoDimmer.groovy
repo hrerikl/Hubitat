@@ -57,51 +57,6 @@ metadata {
 		generate_preferences(configuration_model())
     	input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: false
 	}
-
-	simulator {
-
-	}
-
-	tiles(scale: 2){
-        multiAttributeTile(name:"switch", type: "lighting", width: 6, height: 4, canChangeIcon: true){
-			tileAttribute ("device.switch", key: "PRIMARY_CONTROL") {
-				attributeState "on", label:'${name}', action:"switch.off", icon:"st.switches.light.on", backgroundColor:"#00a0dc", nextState:"turningOff"
-				attributeState "off", label:'${name}', action:"switch.on", icon:"st.switches.light.off", backgroundColor:"#ffffff", nextState:"turningOn"
-				attributeState "turningOn", label:'${name}', action:"switch.off", icon:"st.switches.light.on", backgroundColor:"#00a0dc", nextState:"turningOff"
-				attributeState "turningOff", label:'${name}', action:"switch.on", icon:"st.switches.light.off", backgroundColor:"#ffffff", nextState:"turningOn"
-			}
-            tileAttribute ("device.level", key: "SLIDER_CONTROL") {
-				attributeState "level", action:"switch level.setLevel"
-			}
-            tileAttribute ("statusText", key: "SECONDARY_CONTROL") {
-           		attributeState "statusText", label:'${currentValue}'       		
-            }
-	    }
-		standardTile("refresh", "device.switch", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
-			state "default", label:'', action:"refresh.refresh", icon:"st.secondary.refresh"
-		}
-        valueTile("power", "device.power", decoration: "flat", width: 2, height: 2) {
-			state "default", label:'${currentValue} W'
-		}
-		valueTile("energy", "device.energy", decoration: "flat", width: 2, height: 2) {
-			state "default", label:'${currentValue} kWh'
-		}
-		standardTile("reset", "device.energy", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
-			state "default", label:'reset kWh', action:"reset"
-		}
-		
-        standardTile("configure", "device.needUpdate", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
-            state "NO" , label:'', action:"configuration.configure"
-            state "YES", label:'', action:"configuration.configure", icon:"https://github.com/erocm123/SmartThingsPublic/raw/master/devicetypes/erocm123/qubino-flush-1d-relay.src/configure@2x.png"
-        }
-		
-		standardTile("Recreate Children", "device.power", inactiveLabel: false, decoration: "flat") {
-			state "default", label:'', action:"recreateChildDevices", icon:"st.secondary.configure"
-		}
-
-		main "switch"
-		details (["switch", "power", "energy", "refresh", "configure", "reset"])
-	}
 }
 
 def poll() {
@@ -303,6 +258,11 @@ def setLevel(value, duration) {
 	commands(cmds)
 }
 
+def logsOff(){
+    log.warn "debug logging disabled..."
+    device.updateSetting("logEnable",[value:"false",type:"bool"])
+}
+
 
 def updated()
 {
@@ -314,7 +274,8 @@ def updated()
     def cmds = update_needed_settings()
     
     sendEvent(name:"needUpdate", value: device.currentValue("needUpdate"), displayed:false, isStateChange: true)
-    
+    if (logEnable) runIn(1800,logsOff)
+	
     response(commands(cmds))
 }
 
@@ -608,6 +569,9 @@ private def logging(message) {
 }
 
 
+def installed() {
+    updated()
+}
 
 def recreateChildDevices() {
     logging( "recreateChildDevices")
