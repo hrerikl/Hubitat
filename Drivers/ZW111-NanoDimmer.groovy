@@ -41,8 +41,9 @@ metadata {
         capability "Pushable Button"
         capability "Health Check"
         
-		command "recreateChildDevices"
-		command "deleteChildren"
+		//Was used in testing
+		//command "recreateChildDevices"
+		//command "deleteChildren"
 		
         attribute   "needUpdate", "string"
 
