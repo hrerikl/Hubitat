@@ -28,7 +28,7 @@
  */
  
 metadata {
-	definition (name: "Aeotec Inc Nano Dimmer", namespace: "hrerikl", author: "Erik Lundby") {
+	definition (name: "Nano Dimmer ZW111 (Aeotec)", namespace: "hrerikl", author: "Erik Lundby") {
 		capability "Actuator"
 		capability "Switch"
 		capability "Switch Level"
@@ -65,11 +65,12 @@ def poll() {
 	cmds << zwave.switchMultilevelV1.switchMultilevelGet()
     cmds << zwave.basicV1.basicGet()
 	logging("polling")
-	commands(cmds, 3000)
+	commands(cmds, 100)
 }
 
 
 def parse(String description) {
+	logging ("parse called with description $description")
 	def result = null
 	if (description.startsWith("Err")) {
 	    result = createEvent(descriptionText:description, isStateChange:true)
@@ -80,9 +81,10 @@ def parse(String description) {
 		}
 	}
     
-    def statusTextmsg = ""
-    if (device.currentState('power') && device.currentState('energy')) statusTextmsg = "${device.currentState('power').value} W ${device.currentState('energy').value} kWh"
-    sendEvent(name:"statusText", value:statusTextmsg, displayed:false)
+	//What Does this give me?
+    //def statusTextmsg = ""
+    //if (device.currentState('power') && device.currentState('energy')) statusTextmsg = "${device.currentState('power').value} W ${device.currentState('energy').value} kWh"
+	//if (device.currentState('statusText') !=  statusTextmsg) sendEvent(name:"statusText", value:statusTextmsg, displayed:false)
     
 	return result
 }
@@ -192,7 +194,6 @@ def zwaveEvent(hubitat.zwave.commands.sensormultilevelv5.SensorMultilevelReport 
 
 def on() {
 	commands([zwave.basicV1.basicSet(value: 0xFF), zwave.basicV1.basicGet()])
-	commands([zwave.basicV1.basicSet(value: 0xFF), zwave.basicV1.basicGet()])
 }
 
 def off() {
@@ -201,14 +202,25 @@ def off() {
 
 def startLevelChange(direction){
 	logging("startLevelChange Called with direction $direction")
-	//dimmingDuration:null, ignoreStartLevel:null, incDec:null, startLevel:null, stepSize:null, upDown:null
 	zwave.switchMultilevelV2.switchMultilevelStartLevelChange(upDown: (direction=='up' ? 0x00 :0x01) , ignoreStartLevel: 0x01,  startLevel: 0x10 , dimmingDuration: 0x10 ).format()
 }
 
 def stopLevelChange(){
+	def cmds=[]
 	logging("stopLevelChange Called")
-	zwave.switchMultilevelV1.switchMultilevelStopLevelChange().format()
+	cmds << zwave.switchMultilevelV1.switchMultilevelStopLevelChange()
+	cmds << zwave.switchMultilevelV1.switchMultilevelGet()
+	
+	commands(cmds)
 }
+
+
+def flash (){
+		
+
+
+}
+
 
 def refresh() {
    	logging("$device.displayName refresh()")
@@ -255,6 +267,7 @@ def setLevel(level) {
 	if(level > 99) level = 99
     if(level < 1) level = 1
     def cmds = []
+	sendEvent(name: "level", value: level, unit: "%")
     cmds << zwave.basicV1.basicSet(value: level)
     cmds << zwave.switchMultilevelV1.switchMultilevelGet()
     
@@ -269,6 +282,7 @@ def setLevel(value, duration) {
     sendEvent(name: "level", value: level, unit: "%")
 	cmds << zwave.switchMultilevelV2.switchMultilevelSet(value: level, dimmingDuration: dimmingDuration)
 	cmds << zwave.switchMultilevelV1.switchMultilevelGet()
+	
 	
 	commands(cmds)
 }
@@ -368,6 +382,7 @@ def update_children (cmd)
 	}
 	if (cmd.parameterNumber==64)
 	{
+		logging(cmd)
 		//pass state to child if necessary
 	}
 }
