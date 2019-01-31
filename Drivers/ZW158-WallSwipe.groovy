@@ -119,21 +119,21 @@ def setLevel(value,duration=null) {
 	   return off() 
     } else {
 	    if (device.latestValue("switch") == "off") { on() }
-        def color = device.latestValue("color")
-	    return adjustColor(color)
+		return sendData(levelColorString(level,device.latestValue("color")))
     }
 }
 
+def levelColorString (int level, String colorInHEX)
+{
+	"#${hex(Math.min(level as int,99))}${colorInHEX.substring(1)}"
+}
+
 def adjustColor(colorInHEX) {
+	if (logEnable) log.debug "adjustColor called with $colorInHEX"
     sendEvent(name: "color", value: colorInHEX)
     def level = device.latestValue("level")
     if(level == null){level = 50}
-	
-	def adjustedLevelColor = "#${hex(Math.min(level as int,99))}${colorInHEX.substring(1)}"
-	
-    if (logEnable) log.debug("Adjusted color is $adjustedLevelColor")
-	
-    return sendData(adjustedLevelColor)
+    return sendData(levelColorString(level,colorInHEX))
 }
 
 def sendData(String value) {
