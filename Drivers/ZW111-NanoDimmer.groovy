@@ -62,8 +62,6 @@ metadata {
 
 def poll() {
 	cmds= []
-	cmds << zwave.configurationV1.configurationGet(parameterNumber: 144) // Check if wall swipe is connected
-	cmds << zwave.configurationV1.configurationGet(parameterNumber: 64) // Get LED Status of wall swipe
 	cmds << zwave.switchMultilevelV1.switchMultilevelGet()
     cmds << zwave.basicV1.basicGet()
 	logging("polling")
@@ -225,7 +223,11 @@ def refresh() {
                 cmds << zwave.configurationV1.configurationGet(parameterNumber: "${it.@index}".toInteger())
             }
         } 
-        cmds << zwave.firmwareUpdateMdV2.firmwareMdGet()
+        //Not currently implemented.
+		//cmds << zwave.firmwareUpdateMdV2.firmwareMdGet()
+		cmds << zwave.versionV1.versionGet()
+		cmds << zwave.configurationV1.configurationGet(parameterNumber: 144) // Check if wall swipe is connected
+		cmds << zwave.configurationV1.configurationGet(parameterNumber: 64) // Get LED Status of wall swipe
     } else {
         cmds << zwave.meterV2.meterGet(scale: 0)
         cmds << zwave.meterV2.meterGet(scale: 2)
@@ -402,7 +404,8 @@ def update_needed_settings()
     
     if(!state.needfwUpdate || state.needfwUpdate == ""){
        logging("Requesting device firmware version")
-       cmds << zwave.firmwareUpdateMdV2.firmwareMdGet()
+	   cmds << zwave.versionV1.versionGet()
+       //cmds << zwave.firmwareUpdateMdV2.firmwareMdGet()
     }   
     if(!state.association1 || state.association1 == "" || state.association1 == "1"){
        logging("Setting association group 1")
@@ -511,20 +514,33 @@ def zwaveEvent(hubitat.zwave.commands.configurationv2.ConfigurationReport cmd) {
 	update_children(cmd)
 }
 
-def zwaveEvent(hubitat.zwave.commands.firmwareupdatemdv2.FirmwareMdReport cmd){
-    logging("Firmware Report ${cmd.toString()}")
-    def firmwareVersion
-    switch(cmd.checksum){
-       case "3281":
-          firmwareVersion = "3.08"
-       break;
-       default:
-          firmwareVersion = cmd.checksum
-    }
-    state.needfwUpdate = "false"
+def zwaveEvent(hubitat.zwave.commands.versionv1.VersionReport cmd) {
+	def firmwareVersion = "${cmd.applicationVersion+cmd.applicationSubVersion/100}"
+	log.info "VersionReport- zWaveLibraryType:${cmd.zWaveLibraryType}"
+	log.info "VersionReport- zWaveProtocolVersion:${cmd.zWaveProtocolVersion}.${cmd.zWaveProtocolSubVersion}"
+	log.info "VersionReport- FirmwareVersion:$firmwareVersion"
+	state.needfwUpdate = "false"
     updateDataValue("firmware", firmwareVersion.toString())
     createEvent(name: "currentFirmware", value: firmwareVersion)
 }
+
+
+
+// def zwaveEvent(hubitat.zwave.commands.firmwareupdatemdv2.FirmwareMdReport cmd){
+//    logging("Firmware Report ${cmd.toString()}")
+//	logging("Firmware Checksum ${cmd.checksum}")
+//    def firmwareVersion
+//    switch(cmd.checksum){
+//      case "3281":
+//          firmwareVersion = "3.08"
+//       break;
+//       default:
+//          firmwareVersion = cmd.checksum
+//    }
+//    state.needfwUpdate = "false"
+//    updateDataValue("firmware", firmwareVersion.toString())
+//    createEvent(name: "currentFirmware", value: firmwareVersion)
+//}
 
 def configure() {
     state.enableDebugging = settings.enableDebugging
@@ -604,7 +620,7 @@ def deleteChildren() {
 
 
 
-
+//Called By Child Device(Wall Swipe) to update LED.
 void sendData (value )
 {
 	def cmds=[]
@@ -631,6 +647,17 @@ def configuration_model()
 {
 '''
 <configuration>
+	  <Value type="list" byteSize="1" index="3" label="Overcurrent Protection." min="0" max="1" value="1" setting_type="zwave" fw="">
+        <Help>
+        Current Overload Protection. Output Load will be turned off automatically after 30 seconds and if the current overrun 1.5A. 
+            0 - Disable
+            1 - Enable
+            Range: 0~1
+            Default: 1 (Previous State)
+        </Help>
+            <Item label="Disable" value="0" />
+			<Item label="Enable" value="1" />          
+      </Value>
 	  <Value type="list" byteSize="1" index="4" label="Overheat Protection." min="0" max="1" value="0" setting_type="zwave" fw="">
         <Help>
         The output load will automatically turn off after 30 seconds if temperature is over 100 C.
